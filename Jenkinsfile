@@ -1,4 +1,3 @@
-
 pipeline {
     agent any
     
@@ -27,34 +26,5 @@ pipeline {
                 }
             }
         }
-        
-        stage('Build-Tag & Push Backend Docker Image') {
-            steps {
-                script {
-                    withDockerRegistry(credentialsId: 'docker-cred') {
-                        dir('api') {
-                            sh 'docker build -t adijaiswal/backend:latest .'
-                            sh 'docker push adijaiswal/backend:latest'
-                           
-                        }
-                    }
-                }
-            }
-        }  
-            
-        stage('Build-Tag & Push Frontend Docker Image') {
-            steps {
-                script {
-                    withDockerRegistry(credentialsId: 'docker-cred') {
-                        dir('client') {
-                            sh 'docker build -t adijaiswal/frontend:latest .'
-                            sh 'docker push adijaiswal/frontend:latest'
-                        }
-                    }
-                }
-            }
-             
-        }  
-            
     }
 }
