@@ -4,6 +4,11 @@ pipeline {
         nodejs 'nodejs24'
     }
     stages {
+        stage('Check File Loaded') {
+            steps {
+                echo '✅ Jenkinsfile loaded and running!'
+            }
+        }
         stage('Frontend Compilation') {
             steps {
                 dir('client') {
