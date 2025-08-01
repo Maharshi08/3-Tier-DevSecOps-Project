@@ -1,17 +1,9 @@
 pipeline {
   agent any
-
-  tools {
-    nodejs 'nodejs24' // Or your configured NodeJS tool name in Jenkins
-  }
-
+  tools { nodejs 'nodejs24' }
   stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
-    }
-    stage('Frontend Compilation') {
+    stage('Checkout') { steps { checkout scm } }
+    stage('Frontend Build') {
       steps {
         dir('client') {
           sh 'npm install'
@@ -19,17 +11,11 @@ pipeline {
         }
       }
     }
-    stage('Backend Compilation') {
+    stage('Backend Build & Test') {
       steps {
         dir('api') {
           sh 'npm install'
-        }
-      }
-    }
-    stage('Test') {
-      steps {
-        dir('api') {
-          sh 'npm test' // Change this to your backend test command
+          sh 'npm test'
         }
       }
     }
