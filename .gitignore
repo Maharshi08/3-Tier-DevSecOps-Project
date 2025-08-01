@@ -1,0 +1,36 @@
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# IDE/editor folders and files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+
+# Logs
+*.log
+logs/
+
+# Node/Yarn/NPM lockfiles at root (in case someone ran npm/yarn here)
+package-lock.json
+yarn.lock
+
+# Root-level environment files
+.env
+.env.*.local
+
+# Build/test artifacts that might appear in root
+dist/
+build/
+coverage/
+test-output/
+*.tgz
+
+# SQL dumps/globals
+*.sql
+mysql-init/*.sql
+
+# Docker ignore files
+.dockerignore
+ 
