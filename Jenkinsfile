@@ -4,11 +4,6 @@ pipeline {
         nodejs 'nodejs24'
     }
     stages {
-        stage('Git Checkout') {
-            steps {
-                git branch: 'main', url: 'https://github.com/Maharshi08/3-Tier-DevSecOps-Project.git'
-            }
-        }
         stage('Frontend Compilation') {
             steps {
                 dir('client') {
