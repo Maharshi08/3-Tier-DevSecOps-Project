@@ -3,7 +3,8 @@ pipeline {
 
   tools {
     nodejs 'nodejs24' // Or your configured NodeJS tool name in Jenkins
-  }                                                                                                                                                                                                                                                                                                                          qq
+  }
+
   stages {
     stage('Checkout') {
       steps {
@@ -11,7 +12,7 @@ pipeline {
       }
     }
     stage('Frontend Compilation') {
-      steps {aaaaaaaaaa
+      steps {
         dir('client') {
           sh 'npm install'
           sh 'npm run build'
