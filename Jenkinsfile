@@ -3,8 +3,7 @@ pipeline {
 
   tools {
     nodejs 'nodejs24' // Or your configured NodeJS tool name in Jenkins
-  }
-                                                                                                                                                                                                                                                                                                                            qq
+  }                                                                                                                                                                                                                                                                                                                          qq
   stages {
     stage('Checkout') {
       steps {
