@@ -6,7 +6,7 @@ import logo from '../logo.svg';
 function Register() {
   const { register } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [form, setForm] = useState({ username: '', email: '', password: '' });
   const [error, setError] = useState('');
 
   const handleChange = e => setForm({ ...form, [e.target.name]: e.target.value });
@@ -14,10 +14,15 @@ function Register() {
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      await register(form.name, form.email, form.password);
-      navigate('/login');
+      const result = await register(form.username, form.email, form.password);
+      if (result.success) {
+        navigate('/login');
+      } else {
+        setError(result.message || 'Registration failed');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Registration failed');
+      console.error('Registration error:', err);
     }
   };
 
@@ -29,8 +34,8 @@ function Register() {
       <form onSubmit={handleSubmit}>
         <input
           className="form-field"
-          name="name"
-          placeholder="Name"
+          name="username"
+          placeholder="Username"
           onChange={handleChange}
           required
         />

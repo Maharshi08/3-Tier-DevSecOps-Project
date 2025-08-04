@@ -14,13 +14,25 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
+      console.log('Attempting login for:', email); // Debug log
       const res = await axios.post('/auth/login', { email, password });
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      setToken(res.data.token);
-      setUser(res.data.user);
-      return { success: true };
+      console.log('Login response:', res.data); // Debug log
+      
+      if (res.data.token && res.data.user) {
+        localStorage.setItem('token', res.data.token);
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+        setToken(res.data.token);
+        setUser(res.data.user);
+        return { success: true };
+      } else {
+        console.error('Invalid response format:', res.data);
+        return {
+          success: false,
+          message: 'Invalid server response',
+        };
+      }
     } catch (err) {
+      console.error('Login error:', err.response?.data || err);
       return {
         success: false,
         message: err.response?.data?.message || 'Login failed. Please try again.',
@@ -28,11 +40,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const register = async (name, email, password) => {
+  const register = async (username, email, password) => {
     try {
-      await axios.post('/auth/register', { name, email, password });
-      return { success: true };
+      console.log('Registration attempt:', { username, email });
+      const response = await axios.post('/auth/register', { 
+        username, 
+        email, 
+        password 
+      });
+      console.log('Registration response:', response.data);
+      return { 
+        success: true,
+        message: 'Registration successful! Please login.'
+      };
     } catch (err) {
+      console.error('Registration error:', err.response?.data || err);
       return {
         success: false,
         message: err.response?.data?.message || 'Registration failed.',

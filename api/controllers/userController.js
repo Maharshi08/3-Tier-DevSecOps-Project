@@ -1,23 +1,25 @@
-const db = require('../models/db');
+const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
 // GET all users
-exports.getAllUsers = (req, res) => {
-  db.query('SELECT id, name, email FROM users', (err, results) => {
-    if (err) return res.status(500).json({ error: err });
-    res.json(results);
-  });
+exports.getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find({}, '-password');
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
 };
 
 // CREATE new user
 exports.addUser = async (req, res) => {
-  const { name, email, password } = req.body;
+    const { username, email, password } = req.body;
 
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'Name, email, and password are required' });
-  }
+    if (!username || !email || !password) {
+        return res.status(400).json({ error: 'Username, email, and password are required' });
+    }
 
-  try {
+    try {
     const hashedPassword = await bcrypt.hash(password, 10);
     db.query(
       'INSERT INTO users (name, email, password) VALUES (?, ?, ?)',

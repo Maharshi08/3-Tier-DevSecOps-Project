@@ -1,69 +1,116 @@
-const db = require('../models/db');
+const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const util = require('util');
 
-const SECRET = process.env.JWT_SECRET || 'supersecret'; // ideally from .env
-
-// Promisify DB query
-const query = util.promisify(db.query).bind(db);
+const SECRET = process.env.JWT_SECRET || 'supersecret';
 
 exports.register = async (req, res) => {
-  const { name, email, password, role } = req.body;
+    try {
+        console.log('Registration attempt with data:', {
+            ...req.body,
+            password: '***hidden***'
+        });
 
-  if (!name || !email || !password) {
-    return res.status(400).json({ error: 'Missing fields' });
-  }
+        const { username, email, password, role } = req.body;
 
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const result = await query(
-      'INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)',
-      [name, email, hashedPassword, role || 'viewer']
-    );
+        // Validate input
+        if (!username || !email || !password) {
+            console.log('Registration failed: Missing required fields');
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
 
-    res.status(201).json({ message: 'User registered', id: result.insertId });
-  } catch (err) {
-    console.error('Registration Error:', err);
-    res.status(500).json({ error: 'Registration failed' });
-  }
+        // Check if user already exists
+        const existingUser = await User.findOne({ 
+            $or: [{ email }, { username }] 
+        });
+
+        if (existingUser) {
+            console.log('Registration failed: User already exists');
+            return res.status(400).json({ 
+                error: 'User with this email or username already exists' 
+            });
+        }
+
+        // Create new user
+        const user = new User({
+            username,
+            email,
+            password,
+            role: role || 'user'
+        });
+
+        await user.save();
+        console.log('User registered successfully:', { email, username });
+
+        // Generate JWT token
+        const token = jwt.sign(
+            { userId: user._id, role: user.role },
+            SECRET,
+            { expiresIn: '24h' }
+        );
+
+        // Return success response
+        res.status(201).json({
+            message: 'User registered successfully',
+            token,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role
+            }
+        });
+
+    } catch (error) {
+        console.error('Register error:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 };
 
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+    const { email, password } = req.body;
+    console.log('Login attempt for email:', email); // Debug log
 
-  try {
-    const results = await query('SELECT * FROM users WHERE email = ?', [email]);
-
-    if (results.length === 0) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required' });
     }
 
-    const user = results[0];
-    const isMatch = await bcrypt.compare(password, user.password);
+    try {
+        // Find user by email
+        const user = await User.findOne({ email });
+        console.log('User found:', user ? 'Yes' : 'No'); // Debug log
+        
+        if (!user) {
+            return res.status(401).json({ message: 'User not found' });
+        }
 
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+        // Check password
+        const isValidPassword = await user.comparePassword(password);
+        console.log('Password valid:', isValidPassword ? 'Yes' : 'No'); // Debug log
+
+        if (!isValidPassword) {
+            return res.status(401).json({ message: 'Invalid password' });
+        }
+
+        // Create token
+        const token = jwt.sign(
+            { userId: user._id, role: user.role },
+            SECRET,
+            { expiresIn: '24h' }
+        );
+
+        // Send response
+        res.json({
+            token,
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role
+            }
+        });
+    } catch (error) {
+        console.error('Login error:', error); // Debug log
+        res.status(500).json({ message: 'Server error during login', error: error.message });
     }
-
-    const token = jwt.sign(
-      { id: user.id, role: user.role },
-      SECRET,
-      { expiresIn: '1h' }
-    );
-
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
-    });
-  } catch (err) {
-    console.error('Login Error:', err);
-    res.status(500).json({ error: 'Login failed' });
-  }
 };
-
