@@ -12,8 +12,18 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());  // Allow all origins for development
+app.use(cors({
+    origin: ['https://your-frontend-url.vercel.app', 'http://localhost:3000'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(bodyParser.json());
+
+// Health check route
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', message: 'API is running' });
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
