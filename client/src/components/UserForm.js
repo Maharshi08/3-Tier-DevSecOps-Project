@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 
 function UserForm({ user, onSubmit, onCancel }) {
-  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [form, setForm] = useState({ username: '', email: '', password: '' });
 
   useEffect(() => {
     if (user) {
-      // Pre-fill name and email for editing, password left blank
-      setForm({ name: user.name, email: user.email, password: '' });
+      // Pre-fill username and email for editing, password left blank
+      setForm({ username: user.username, email: user.email, password: '' });
     } else {
       // Reset form for creation
-      setForm({ name: '', email: '', password: '' });
+      setForm({ username: '', email: '', password: '' });
     }
   }, [user]);
 
@@ -24,13 +24,19 @@ function UserForm({ user, onSubmit, onCancel }) {
     e.preventDefault();
 
     const payload = {
-      name: form.name,
+      username: form.username,
       email: form.email,
     };
 
     // Only include password if adding
     if (!user) {
       payload.password = form.password;
+    }
+    
+    // Validate required fields
+    if (!payload.username || !payload.email || (!user && !payload.password)) {
+      alert('All fields are required');
+      return;
     }
 
     onSubmit(payload);
@@ -46,8 +52,8 @@ function UserForm({ user, onSubmit, onCancel }) {
       <input
         className="form-field"
         type="text"
-        name="name"
-        placeholder="Name"
+        name="username"
+        placeholder="Username"
         value={form.name}
         onChange={handleChange}
         required

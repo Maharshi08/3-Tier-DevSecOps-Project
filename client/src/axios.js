@@ -2,10 +2,12 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: 'https://3-tier-dev-sec-ops-project-ddog.vercel.app/api',  // New Vercel backend URL
+  baseURL: 'https://3-tier-dev-sec-ops-project-ddog.vercel.app/api',
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+    'Accept': 'application/json'
+  },
+  withCredentials: false // Disable credentials for now since we're using '*' origin
 });
 
 // Request interceptor
