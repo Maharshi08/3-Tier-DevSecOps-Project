@@ -32,18 +32,60 @@ app.use('/api/users', userRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ error: 'Something went wrong!' });
+    console.error('Error details:', {
+        message: err.message,
+        stack: err.stack,
+        name: err.name,
+        code: err.code
+    });
+    
+    // Handle specific types of errors
+    if (err.name === 'ValidationError') {
+        return res.status(400).json({ 
+            error: 'Validation Error', 
+            details: err.message 
+        });
+    }
+    
+    if (err.name === 'MongoError' || err.name === 'MongoServerError') {
+        return res.status(503).json({ 
+            error: 'Database Error', 
+            details: 'Database operation failed' 
+        });
+    }
+    
+    res.status(500).json({ 
+        error: 'Internal Server Error',
+        message: err.message
+    });
 });
 
 // Connect to MongoDB and start server
-connectDB()
-    .then(() => {
+const startServer = async () => {
+    try {
+        await connectDB();
+        
+        // Monitor for MongoDB connection errors
+        const mongoose = require('mongoose');
+        mongoose.connection.on('error', (err) => {
+            console.error('MongoDB connection error:', err);
+        });
+        
+        mongoose.connection.on('disconnected', () => {
+            console.error('MongoDB disconnected. Attempting to reconnect...');
+        });
+        
+        mongoose.connection.on('connected', () => {
+            console.log('MongoDB connected successfully');
+        });
+        
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
         });
-    })
-    .catch(err => {
-        console.error('Failed to connect to MongoDB:', err);
+    } catch (err) {
+        console.error('Failed to start server:', err);
         process.exit(1);
-    });
+    }
+};
+
+startServer();
