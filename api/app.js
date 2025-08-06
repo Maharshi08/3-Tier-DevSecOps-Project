@@ -9,17 +9,45 @@ const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+
+// Initialize MongoDB connection at startup
+let isConnected = false;
+
+const initializeMongoDB = async () => {
+    if (isConnected) {
+        console.log('Using existing MongoDB connection');
+        return;
+    }
+
+    try {
+        await connectDB();
+        isConnected = true;
+        console.log('MongoDB connection established');
+    } catch (error) {
+        console.error('MongoDB connection error:', error);
+        throw error;
+    }
+};
 
 // Middleware
 app.use(cors({
-    origin: '*',  // Allow all origins temporarily for debugging
-    credentials: true,
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-    optionsSuccessStatus: 200 // Some legacy browsers (IE11, various SmartTVs) choke on 204
+    optionsSuccessStatus: 200
 }));
 app.use(bodyParser.json());
+
+// Ensure MongoDB connection before handling requests
+app.use(async (req, res, next) => {
+    try {
+        await initializeMongoDB();
+        next();
+    } catch (error) {
+        console.error('Database connection error:', error);
+        res.status(500).json({ error: 'Database connection failed' });
+    }
+});
 
 // Health check route
 app.get('/api/health', (req, res) => {
@@ -60,32 +88,5 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Connect to MongoDB and start server
-const startServer = async () => {
-    try {
-        await connectDB();
-        
-        // Monitor for MongoDB connection errors
-        const mongoose = require('mongoose');
-        mongoose.connection.on('error', (err) => {
-            console.error('MongoDB connection error:', err);
-        });
-        
-        mongoose.connection.on('disconnected', () => {
-            console.error('MongoDB disconnected. Attempting to reconnect...');
-        });
-        
-        mongoose.connection.on('connected', () => {
-            console.log('MongoDB connected successfully');
-        });
-        
-        app.listen(PORT, () => {
-            console.log(`🚀 Server running on port ${PORT}`);
-        });
-    } catch (err) {
-        console.error('Failed to start server:', err);
-        process.exit(1);
-    }
-};
-
-startServer();
+// Export the app for serverless use
+module.exports = app;

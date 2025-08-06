@@ -6,12 +6,6 @@
             "use": "@vercel/node"
         }
     ],
-    "rewrites": [
-        {
-            "source": "/(.*)",
-            "destination": "/app.js"
-        }
-    ],
     "headers": [
         {
             "source": "/(.*)",
@@ -22,7 +16,7 @@
                 },
                 {
                     "key": "Access-Control-Allow-Methods",
-                    "value": "GET, POST, PUT, DELETE, OPTIONS"
+                    "value": "GET, POST, PUT, DELETE, PATCH, OPTIONS"
                 },
                 {
                     "key": "Access-Control-Allow-Headers",
@@ -33,6 +27,12 @@
                     "value": "true"
                 }
             ]
+        }
+    ],
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/app.js"
         }
     ]
 }

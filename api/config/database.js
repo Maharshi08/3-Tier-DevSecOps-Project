@@ -6,18 +6,35 @@ const connectDB = async () => {
             throw new Error('MONGODB_URI is not defined in environment variables');
         }
 
+        // If already connected, return existing connection
+        if (mongoose.connection.readyState === 1) {
+            console.log('Using existing MongoDB connection');
+            return mongoose.connection;
+        }
+
         const conn = await mongoose.connect(process.env.MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-            socketTimeoutMS: 45000, // Close sockets after 45s
-            family: 4, // Use IPv4, skip trying IPv6
+            serverSelectionTimeoutMS: 10000, // Increased timeout for serverless environment
+            socketTimeoutMS: 60000, // Increased socket timeout
+            family: 4 // Use IPv4
         });
 
         console.log(`MongoDB Connected: ${conn.connection.host}`);
         
-        // Enable debug mode for Mongoose
-        mongoose.set('debug', true);
+        // Handle connection errors
+        mongoose.connection.on('error', (err) => {
+            console.error('MongoDB connection error:', err);
+        });
+
+        mongoose.connection.on('disconnected', () => {
+            console.log('MongoDB disconnected');
+        });
+
+        // Enable debug mode for development
+        if (process.env.NODE_ENV !== 'production') {
+            mongoose.set('debug', true);
+        }
         
         return conn;
     } catch (error) {
@@ -26,7 +43,7 @@ const connectDB = async () => {
             code: error.code,
             name: error.name
         });
-        throw error; // Let the calling code handle the error
+        throw error;
     }
 };
 
