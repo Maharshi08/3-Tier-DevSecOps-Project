@@ -6,17 +6,32 @@ const SECRET = process.env.JWT_SECRET || 'supersecret';
 
 exports.register = async (req, res) => {
     try {
-        console.log('Registration attempt with data:', {
-            ...req.body,
-            password: '***hidden***'
-        });
+        console.log('Registration request body:', req.body);
 
         const { username, email, password, role } = req.body;
 
         // Validate input
         if (!username || !email || !password) {
-            console.log('Registration failed: Missing required fields');
-            return res.status(400).json({ error: 'Missing required fields' });
+            console.log('Registration validation failed:', {
+                hasUsername: !!username,
+                hasEmail: !!email,
+                hasPassword: !!password
+            });
+            return res.status(400).json({ 
+                error: 'Missing required fields',
+                details: {
+                    username: !username ? 'Username is required' : null,
+                    email: !email ? 'Email is required' : null,
+                    password: !password ? 'Password is required' : null
+                }
+            });
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            console.log('Invalid email format:', email);
+            return res.status(400).json({ error: 'Invalid email format' });
         }
 
         // Check if user already exists
@@ -25,9 +40,16 @@ exports.register = async (req, res) => {
         });
 
         if (existingUser) {
-            console.log('Registration failed: User already exists');
+            console.log('User already exists:', {
+                existingEmail: existingUser.email === email,
+                existingUsername: existingUser.username === username
+            });
             return res.status(400).json({ 
-                error: 'User with this email or username already exists' 
+                error: 'User already exists',
+                details: {
+                    email: existingUser.email === email ? 'Email already in use' : null,
+                    username: existingUser.username === username ? 'Username already taken' : null
+                }
             });
         }
 
@@ -39,8 +61,27 @@ exports.register = async (req, res) => {
             role: role || 'user'
         });
 
+        console.log('Attempting to save user:', {
+            username,
+            email,
+            hasPassword: !!password,
+            role: role || 'user'
+        });
+
+        // Generate JWT token
+        const token = jwt.sign(
+            { userId: user._id, role: user.role },
+            SECRET,
+            { expiresIn: '24h' }
+        );
+
         await user.save();
-        console.log('User registered successfully:', { email, username });
+        console.log('User saved successfully:', {
+            userId: user._id,
+            username: user.username,
+            email: user.email,
+            role: user.role
+        });
 
         // Generate JWT token
         const token = jwt.sign(
@@ -60,10 +101,34 @@ exports.register = async (req, res) => {
                 role: user.role
             }
         });
-
     } catch (error) {
-        console.error('Register error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('Registration error:', {
+            message: error.message,
+            code: error.code,
+            name: error.name,
+            stack: error.stack
+        });
+
+        if (error.code === 11000) {
+            // Handle duplicate key error
+            const field = Object.keys(error.keyPattern)[0];
+            return res.status(400).json({
+                error: 'Duplicate value',
+                details: `${field} already exists`
+            });
+        }
+
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({
+                error: 'Validation error',
+                details: Object.values(error.errors).map(err => err.message)
+            });
+        }
+
+        res.status(500).json({ 
+            error: 'Error registering user',
+            details: error.message
+        });
     }
 };
 
