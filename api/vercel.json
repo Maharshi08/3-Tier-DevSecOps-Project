@@ -18,7 +18,7 @@
             "headers": [
                 {
                     "key": "Access-Control-Allow-Origin",
-                    "value": "https://3-tier-dev-sec-ops-project-5lav.vercel.app"
+                    "value": "*"
                 },
                 {
                     "key": "Access-Control-Allow-Methods",

@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const instance = axios.create({
-  baseURL: 'https://3-tier-dev-sec-ops-project.vercel.app/api',  // Vercel deployment URL
+  baseURL: 'https://3-tier-dev-sec-ops-project-ddog.vercel.app/api',  // New Vercel backend URL
   headers: {
     'Content-Type': 'application/json'
   }
